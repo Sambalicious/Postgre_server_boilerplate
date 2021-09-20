@@ -1,1 +1,6 @@
 .env
+
+
+//exclude not module
+
+/node_modules
