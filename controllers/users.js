@@ -14,7 +14,6 @@ const validateUsers = (requestBody) => {
 };
 
 async function encryptPassword(password) {
-
   try {
     let SALT = await bcrypt.genSalt(10);
     return await bcrypt.hash(password, SALT);
@@ -24,17 +23,17 @@ async function encryptPassword(password) {
 }
 
 exports.addNewUser = asyncMiddleware(async (req, res) => {
+  let { name, email, password } = req.body;
   let { error } = validateUsers(req.body);
   if (error) {
     return res.status(400).send(error.details[0].message);
   }
-  let user = await User.findOne({ where: { email: req.body.email } });
+  let user = await User.findOne({ where: { email } });
 
   if (user) {
-    return res.status(400).send("This user is already registered");
+    return res.status(400).json({ error: "This user is already registered" });
   }
 
-  let { name, email, password } = req.body;
   password = await encryptPassword(password);
 
   user = await User.create({
@@ -42,8 +41,7 @@ exports.addNewUser = asyncMiddleware(async (req, res) => {
     email,
     password,
   });
-
-  return res.json(user);
+  return res.json({ user });
 });
 
 exports.getUsers = asyncMiddleware(async (req, res) => {
