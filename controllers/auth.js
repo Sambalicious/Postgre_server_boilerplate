@@ -14,12 +14,12 @@ exports.loginUser = asyncMiddleware(async (req, res) => {
 
   let user = await User.findOne({ where: { email } });
   if (!user) {
-    return res.status(400).json({ message: "User does not exist" });
+    return res.status(400).json({ error: "User does not exist" });
   }
-  let isValidPassword = await decryptPassword(password, user.password);
+  let isValidatedPassword = await decryptPassword(password, user.password);
 
-  if (!isValidPassword) {
-    return res.status(400).json({ message: "Invalid credentials" });
+  if (!isValidatedPassword) {
+    return res.status(400).json({ error: "Invalid credentials" });
   }
 
   const token = jwt.sign({ user }, process.env.SECRET_TOKEN);
