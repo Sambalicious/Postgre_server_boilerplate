@@ -1,9 +1,11 @@
 const router = require("express").Router();
 
-const auth = require("../middleware/auth");
 const UserService = require("./../controllers/users");
 
 router.post("/", UserService.addNewUser);
-router.get("/", UserService.getUsers);
+//router.get("/", UserService.getUsers);
+router.get("/", UserService.getUsersWithPagination);
+router.get("/:id", UserService.getUser);
+router.put("/:id", UserService.editUser);
 
 module.exports = router;

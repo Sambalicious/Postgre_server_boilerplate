@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     toJSON() {
-      return { ...this.get(), id: undefined, password: undefined };
+      return { ...this.get(), password: undefined };
     }
   }
   User.init(
