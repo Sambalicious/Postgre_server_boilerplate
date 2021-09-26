@@ -2,13 +2,15 @@ const { User } = require("../models");
 const Joi = require("joi");
 const { asyncMiddleware } = require("../middleware/async");
 const bcrypt = require("bcryptjs");
+const Op = require("sequelize").Op;
+
+let defaultPageSize = 5;
 
 const validateUsers = (requestBody) => {
   const schema = Joi.object({
     name: Joi.string().required().min(3).max(255),
     email: Joi.string().required().email(),
     password: Joi.string().required().min(3).max(50),
-    role: Joi.string(),
   });
   return schema.validate(requestBody);
 };
@@ -31,7 +33,9 @@ exports.addNewUser = asyncMiddleware(async (req, res) => {
   let user = await User.findOne({ where: { email } });
 
   if (user) {
-    return res.status(400).json({ error: "This user is already registered" });
+    return res
+      .status(400)
+      .send({ error: { message: "This user is already registered" } });
   }
 
   password = await encryptPassword(password);
@@ -41,10 +45,75 @@ exports.addNewUser = asyncMiddleware(async (req, res) => {
     email,
     password,
   });
-  return res.json({ user });
+  return res.json({ Data: { user } });
 });
 
-exports.getUsers = asyncMiddleware(async (req, res) => {
-  let users = await User.findAll({});
-  res.json(users);
+// exports.getUsers = asyncMiddleware(async (req, res) => {
+//   let users = await User.findAll();
+//   res.json({ Data: { users } });
+// });
+
+exports.getUsersWithPagination = asyncMiddleware(async (req, res) => {
+  const { name, pageIndex, pageSize } = req.query;
+  const condition = name ? { name: { [Op.like]: `%${name}%` } } : null;
+  const { limit, offset, pageNumber } = getPagination(pageIndex, pageSize);
+  //how to retrieve data with condition
+  let users = await User.findAndCountAll({ where: condition, limit, offset });
+
+  const response = getPaginatedData({
+    data: users,
+    pageIndex: pageNumber,
+    pageSize,
+    name: "Users",
+  });
+
+  return res.json(response);
 });
+exports.getUser = asyncMiddleware(async (req, res) => {
+  const id = req.params.id;
+
+  let users = await User.findOne({ where: { id } });
+  return res.json({ Data: { users } });
+});
+
+exports.editUser = asyncMiddleware(async (req, res) => {
+  let { email, password, name } = req.body;
+  let { error } = validateUsers(req.body);
+  if (error) {
+    return res.status(400).json(error.details[0].message);
+  }
+
+  let user = await User.findOne({ where: { id: req.params.id } });
+  if (!user) {
+    return res.status(404).json({ error: { message: "User not found" } });
+  }
+
+  password = await encryptPassword(password);
+
+  (user.email = email), (user.password = password);
+  user.name = name;
+
+  await user.save();
+
+  return res.json({ Data: { user } });
+});
+
+const getPagination = (pageIndex, pageSize) => {
+  const limit = pageSize ? +pageSize : defaultPageSize;
+  let pageNumber = pageIndex > 1 ? pageIndex - 1 : 0;
+  const offset = pageIndex ? pageNumber * limit : 0;
+
+  return { limit, offset, pageNumber };
+};
+
+const getPaginatedData = ({ data, pageNumber, pageSize, name }) => {
+  const { count: TotalCount, rows } = data;
+
+  const CurrentPage = pageNumber >= 1 ? pageNumber + 1 : 1;
+
+  const TotalPages = Math.ceil(
+    TotalCount / (pageSize ? pageSize : defaultPageSize)
+  );
+ 
+  return { [name]: rows, TotalCount, TotalPages, CurrentPage };
+};

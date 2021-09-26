@@ -2,13 +2,12 @@
 
 A quick minimalistic postgre server boilerplate with Sequelize.
 
-*Features
--User signup with jwt already set up
--password are hashed before saving to database
+\*Features
+-User sign up with jwt already set up
+-password are hashed(with bcrypt) before saving to database
 
-
-
-*How to run 
+\*How to run
 -clone the code
 -run yarn to install the dependencies
+
 - node app.js
