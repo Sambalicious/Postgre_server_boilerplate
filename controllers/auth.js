@@ -22,6 +22,8 @@ exports.loginUser = asyncMiddleware(async (req, res) => {
     return res.status(400).json({ error: "Invalid credentials" });
   }
 
+  
+
   const token = jwt.sign({ user }, process.env.SECRET_TOKEN);
 
   return res.send({ user, accessToken: token });

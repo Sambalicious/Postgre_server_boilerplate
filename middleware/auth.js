@@ -7,9 +7,10 @@ module.exports = function (req, res, next) {
   }
 
   try {
-    const decodedToken = jwt.verify(token, "ConfigToken"); ///the configToken should be accessed secretly
+    const decodedToken = jwt.verify(token, process.env.SECRET_TOKEN); ///the configToken should be accessed secretly
 
-    req.user = decodedToken;
+    req.user = decodedToken.user;
+
     return next();
   } catch (error) {
     res.status(400).send("Invalid Token");
