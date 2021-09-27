@@ -11,6 +11,7 @@ const validateUsers = (requestBody) => {
     name: Joi.string().required().min(3).max(255),
     email: Joi.string().required().email(),
     password: Joi.string().required().min(3).max(50),
+    role: Joi.string().optional(),
   });
   return schema.validate(requestBody);
 };
@@ -64,7 +65,7 @@ exports.getUsersWithPagination = asyncMiddleware(async (req, res) => {
     data: users,
     pageIndex: pageNumber,
     pageSize,
-    name: "Users",
+    dataKeyName: "Users",
   });
 
   return res.json(response);
@@ -77,7 +78,7 @@ exports.getUser = asyncMiddleware(async (req, res) => {
 });
 
 exports.editUser = asyncMiddleware(async (req, res) => {
-  let { email, password, name } = req.body;
+  let { email, password, name, role } = req.body;
   let { error } = validateUsers(req.body);
   if (error) {
     return res.status(400).json(error.details[0].message);
@@ -92,6 +93,7 @@ exports.editUser = asyncMiddleware(async (req, res) => {
 
   (user.email = email), (user.password = password);
   user.name = name;
+  user.role = role;
 
   await user.save();
 
@@ -106,7 +108,7 @@ const getPagination = (pageIndex, pageSize) => {
   return { limit, offset, pageNumber };
 };
 
-const getPaginatedData = ({ data, pageNumber, pageSize, name }) => {
+const getPaginatedData = ({ data, pageNumber, pageSize, dataKeyName }) => {
   const { count: TotalCount, rows } = data;
 
   const CurrentPage = pageNumber >= 1 ? pageNumber + 1 : 1;
@@ -114,6 +116,6 @@ const getPaginatedData = ({ data, pageNumber, pageSize, name }) => {
   const TotalPages = Math.ceil(
     TotalCount / (pageSize ? pageSize : defaultPageSize)
   );
- 
-  return { [name]: rows, TotalCount, TotalPages, CurrentPage };
+
+  return { [dataKeyName]: rows, TotalCount, TotalPages, CurrentPage };
 };

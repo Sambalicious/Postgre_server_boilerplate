@@ -1,9 +1,8 @@
 module.exports = function (req, res, next) {
-  
-  if (req.user.role !== "admin") {
+  if (!["admin", "superAdmin"].includes(req.user.role)) {
     return res
       .status(403)
-      .send("You do no have enough permission for this operation");
+      .json({ message: "You do no have enough permission for this operation" });
   }
 
   return next();
